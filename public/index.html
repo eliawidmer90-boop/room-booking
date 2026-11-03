@@ -4,11 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#173e35">
-  <meta name="description" content="View and book the Big or Small conference room at the Directorate of Education, Kavango East, Rundu.">
-  <title>Room bookings · Kavango East Education</title>
+  <meta name="description" content="View and book conference rooms and vehicles at the Directorate of Education, Kavango East, Rundu.">
+  <title>Room &amp; vehicle bookings · Kavango East Education</title>
   <link rel="icon" href="/assets/namibia-coat-of-arms.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/styles.css">
+  <script src="/tabs.js" type="module"></script>
   <script src="/app.js" type="module"></script>
+  <script src="/vehicles.js" type="module"></script>
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
 <body>
@@ -30,10 +32,15 @@
   <a class="skip-link" href="#booking-form">Skip to booking form</a>
   <header class="masthead">
     <img src="/assets/namibia-coat-of-arms.svg" width="42" height="46" alt="Coat of arms of Namibia">
-    <div><h1>Conference room booking</h1><p>Directorate of Education · Kavango East, Rundu</p></div>
+    <div><h1>Room &amp; vehicle booking</h1><p>Directorate of Education · Kavango East, Rundu</p></div>
     <span id="service-message" class="preview-label" role="status" hidden></span>
   </header>
-  <main class="booking-layout" id="main">
+  <main id="main">
+  <div class="booking-tabs" role="tablist" aria-label="Booking type">
+    <button id="room-tab" role="tab" aria-controls="room-panel" aria-selected="true" tabindex="0" data-booking-tab="rooms">Room Booking</button>
+    <button id="vehicle-tab" role="tab" aria-controls="vehicle-panel" aria-selected="false" tabindex="-1" data-booking-tab="vehicles">Vehicle Booking</button>
+  </div>
+  <div class="booking-layout" id="room-panel" role="tabpanel" aria-labelledby="room-tab">
     <section class="booking-panel" aria-labelledby="booking-title">
       <h2 id="booking-title">Book a room</h2>
       <form id="booking-form">
@@ -58,9 +65,37 @@
       <div id="schedule-content" aria-busy="true"><div class="loading-state">Loading bookings…</div></div>
       <div class="schedule-foot"><button class="text-button" id="hours-toggle" data-action="hours">Show full day</button></div>
     </section>
+  </div>
+  <div class="booking-layout" id="vehicle-panel" role="tabpanel" aria-labelledby="vehicle-tab" hidden>
+    <section class="booking-panel" aria-labelledby="vehicle-booking-title">
+      <h2 id="vehicle-booking-title">Book a vehicle</h2>
+      <form id="vehicle-form">
+        <label class="form-label">Vehicle<select name="vehicle" required></select></label>
+        <label class="form-label">Your name<input name="name" required minlength="2" maxlength="100" autocomplete="name"></label>
+        <div class="form-row"><label class="form-label">Departure date<input name="departureDate" type="date" required></label><label class="form-label">Departure time<input name="departureTime" type="time" required step="900"></label></div>
+        <div class="form-row"><label class="form-label">Return date<input name="returnDate" type="date" required></label><label class="form-label">Return time<input name="returnTime" type="time" required step="900"></label></div>
+        <p class="end-time" id="vehicle-duration" aria-live="polite"></p>
+        <details class="optional-details"><summary>Trip details (optional)</summary><label class="form-label">Driver name<input name="driver" maxlength="100"></label><label class="form-label">Destination<input name="destination" maxlength="120"></label><label class="form-label">Purpose<input name="purpose" maxlength="120"></label></details>
+        <p class="form-note">Your name, reserved time and trip details are visible to everyone.</p>
+        <p id="vehicle-form-error" class="form-error" role="alert" hidden></p>
+        <button id="vehicle-submit" type="submit" class="button primary full-width">Book vehicle</button>
+      </form>
+    </section>
+    <section class="schedule-panel" aria-labelledby="vehicle-schedule-title">
+      <div class="schedule-heading"><div><h2 id="vehicle-schedule-title">Bookings</h2><p>Rundu time · CAT (UTC+2)</p></div><div class="schedule-actions"><label class="mine-toggle"><input type="checkbox" id="vehicle-mine">My bookings</label><span id="vehicle-sync" role="status"></span></div></div>
+      <div class="schedule-toolbar" id="vehicle-toolbar">
+        <div class="date-controls"><button class="icon-button" data-v-action="previous" aria-label="Previous day"><svg class="icon flip"><use href="#i-chevron"/></svg></button><button class="icon-button" data-v-action="next" aria-label="Next day"><svg class="icon"><use href="#i-chevron"/></svg></button><label class="date-label"><span id="vehicle-date-heading"></span><svg class="icon"><use href="#i-calendar"/></svg><input id="vehicle-schedule-date" type="date" aria-label="Vehicle schedule date"></label><button class="today-button" data-v-action="today">Today</button></div>
+        <div class="vehicle-view-controls"><label class="vehicle-filter"><span class="sr-only">Filter vehicles</span><select id="vehicle-filter"><option value="all">All vehicles</option></select></label><div class="view-switch" role="group" aria-label="Vehicle schedule view"><button data-v-view="day" class="selected" aria-pressed="true">Day</button><button data-v-view="week" aria-pressed="false">Week</button></div></div>
+      </div>
+      <div id="vehicle-schedule" aria-busy="true"><div class="loading-state">Loading bookings…</div></div>
+      <div class="schedule-foot"><button class="text-button" id="vehicle-hours" data-v-action="hours">Show full day</button></div>
+    </section>
+  </div>
   </main>
   <dialog id="detail-dialog" aria-labelledby="detail-title" class="modal detail-modal"><div id="detail-content"></div></dialog>
+  <dialog id="vehicle-dialog" aria-labelledby="vehicle-detail-title" class="modal detail-modal"><div id="vehicle-detail"></div></dialog>
+  <div id="vehicle-toast" role="status" class="toast" hidden></div>
   <div id="toast" role="status" class="toast" hidden></div>
-  <noscript><div class="noscript">Please enable JavaScript to view availability and book a room.</div></noscript>
+  <noscript><div class="noscript">Please enable JavaScript to view availability and make a booking.</div></noscript>
 </body>
 </html>

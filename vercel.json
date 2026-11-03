@@ -3,7 +3,7 @@
   "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "functions": { "api/bookings.js": { "maxDuration": 30 } },
+  "functions": { "api/bookings.js": { "maxDuration": 30 }, "api/vehicle-bookings.js": { "maxDuration": 30 } },
   "headers": [{
     "source": "/(.*)",
     "headers": [
