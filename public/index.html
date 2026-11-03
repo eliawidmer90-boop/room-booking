@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173e35">
+  <meta name="description" content="View and book the Big or Small conference room at the Directorate of Education, Kavango East, Rundu.">
+  <title>Room bookings · Kavango East Education</title>
+  <link rel="icon" href="/assets/namibia-coat-of-arms.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <svg class="icon-definitions" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 5h2m4 0h2"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V3H3v13h5"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5m10-5a8 8 0 0 0-13-2l-2 3m16 8-2 3a8 8 0 0 1-13-2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-rooms" viewBox="0 0 24 24"><path d="M3 21V5h11v16M14 11h7v10M7 9h3m-3 4h3m-3 4h3m8-2h1m-1 3h1M1 21h22"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  </defs></svg>
+  <a class="skip-link" href="#booking-form">Skip to booking form</a>
+  <header class="masthead">
+    <img src="/assets/namibia-coat-of-arms.svg" width="42" height="46" alt="Coat of arms of Namibia">
+    <div><h1>Conference room booking</h1><p>Directorate of Education · Kavango East, Rundu</p></div>
+    <span id="service-message" class="preview-label" role="status" hidden></span>
+  </header>
+  <main class="booking-layout" id="main">
+    <section class="booking-panel" aria-labelledby="booking-title">
+      <h2 id="booking-title">Book a room</h2>
+      <form id="booking-form">
+        <fieldset class="room-options"><legend>Room</legend><label><input type="radio" name="room" value="big" checked><span>Big</span></label><label><input type="radio" name="room" value="small"><span>Small</span></label></fieldset>
+        <label class="form-label">Your name<input name="name" required minlength="2" maxlength="100" autocomplete="name"></label>
+        <div class="form-row"><label class="form-label">Date<input type="date" name="date" required></label><label class="form-label">Start time<input type="time" name="start" required step="900"></label></div>
+        <label class="form-label">Duration<select name="duration"><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60" selected>1 hour</option><option value="90">1 hour 30 minutes</option><option value="120">2 hours</option><option value="180">3 hours</option><option value="240">4 hours</option><option value="480">8 hours</option><option value="custom">Custom duration</option></select></label>
+        <label class="form-label" id="custom-duration-wrap" hidden>Duration in minutes<input type="number" id="custom-duration" min="15" max="1440" step="15" value="60"><small>15-minute steps, up to 24 hours</small></label>
+        <p class="end-time">Ends at <strong id="end-time">—</strong> CAT</p>
+        <details class="optional-details"><summary>Meeting details (optional)</summary><label class="form-label">Meeting title<input name="purpose" maxlength="120"></label><label class="form-label">Department or team<input name="department" maxlength="100" autocomplete="organization"></label></details>
+        <p class="form-note">Your name and reserved time are visible to everyone.</p>
+        <p class="form-error" id="form-error" role="alert" hidden></p>
+        <button type="submit" class="button primary full-width" id="book-submit">Book room</button>
+      </form>
+    </section>
+    <section class="schedule-panel" aria-labelledby="schedule-title">
+      <div class="schedule-heading"><div><h2 id="schedule-title">Bookings</h2><p>Rundu time · CAT (UTC+2)</p></div><div class="schedule-actions"><label class="mine-toggle"><input type="checkbox" id="my-bookings">My bookings</label><span id="sync-status" role="status"></span></div></div>
+      <div class="schedule-toolbar">
+        <div class="date-controls"><button class="icon-button" data-action="previous" aria-label="Previous day"><svg class="icon flip"><use href="#i-chevron"/></svg></button><button class="icon-button" data-action="next" aria-label="Next day"><svg class="icon"><use href="#i-chevron"/></svg></button><label class="date-label"><span id="date-heading"></span><svg class="icon"><use href="#i-calendar"/></svg><input type="date" id="schedule-date" aria-label="Schedule date"></label><button class="today-button" data-action="today">Today</button></div>
+        <div class="view-switch" role="group" aria-label="Schedule view"><button data-view="day" class="selected" aria-pressed="true">Day</button><button data-view="week" aria-pressed="false">Week</button></div>
+      </div>
+      <div id="schedule-content" aria-busy="true"><div class="loading-state">Loading bookings…</div></div>
+      <div class="schedule-foot"><button class="text-button" id="hours-toggle" data-action="hours">Show full day</button></div>
+    </section>
+  </main>
+  <dialog id="detail-dialog" aria-labelledby="detail-title" class="modal detail-modal"><div id="detail-content"></div></dialog>
+  <div id="toast" role="status" class="toast" hidden></div>
+  <noscript><div class="noscript">Please enable JavaScript to view availability and book a room.</div></noscript>
+</body>
+</html>
