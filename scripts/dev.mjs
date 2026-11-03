@@ -3,11 +3,15 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, extname, sep } from 'node:path';
 import { createHandler } from '../lib/handler.mjs';
 import { MemoryStore } from '../lib/store.mjs';
+import { VehicleMemoryStore } from '../lib/vehicle-store.mjs';
+import { validateVehicleBooking } from '../lib/vehicle-booking.mjs';
 
 const root = resolve(import.meta.dirname,'..');
 let handler;
+let vehicleHandler;
 if (process.env.DATABASE_URL) {
   handler = (await import('../api/bookings.js')).default;
+  vehicleHandler = (await import('../api/vehicle-bookings.js')).default;
 } else {
   const directory = resolve(root,'.local-data');
   mkdirSync(directory,{recursive:true});
@@ -15,6 +19,10 @@ if (process.env.DATABASE_URL) {
   const store = new MemoryStore(existsSync(file) ? JSON.parse(readFileSync(file,'utf8')) : []);
   store.save = () => writeFileSync(file,JSON.stringify(store.rows,null,2));
   handler = createHandler(async()=>store,{demo:true});
+  const vehicleFile = resolve(directory,'vehicle-bookings.json');
+  const vehicleStore = new VehicleMemoryStore(existsSync(vehicleFile) ? JSON.parse(readFileSync(vehicleFile,'utf8')) : []);
+  vehicleStore.save = () => writeFileSync(vehicleFile,JSON.stringify(vehicleStore.rows,null,2));
+  vehicleHandler = createHandler(async()=>vehicleStore,{demo:true,validate:validateVehicleBooking});
 }
 const types = {'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.woff2':'font/woff2','.png':'image/png'};
 const publicRoot = resolve(root,'public');
@@ -24,13 +32,13 @@ const server = createServer(async(req,res)=>{
   const url = new URL(req.url,'http://localhost');
   res.status = code => { res.statusCode = code; return res; };
   res.json = body => { res.setHeader('Content-Type','application/json'); res.end(JSON.stringify(body)); };
-  if (url.pathname === '/api/bookings') {
+  if (url.pathname === '/api/bookings' || url.pathname === '/api/vehicle-bookings') {
     try {
       let data = '';
       for await (const chunk of req) { data += chunk; if (data.length > 16384) { res.status(413).json({error:'Booking details are too long.'}); return; } }
       req.body = data ? JSON.parse(data) : undefined;
     } catch { res.status(400).json({error:'Invalid booking details.'}); return; }
-    await handler(req,res);
+    await (url.pathname === '/api/bookings' ? handler : vehicleHandler)(req,res);
     return;
   }
   let file;

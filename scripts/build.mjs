@@ -8,4 +8,4 @@ if (output !== resolve(root,'dist')) throw new Error('Unexpected build directory
 await rm(output,{recursive:true,force:true});
 await mkdir(output,{recursive:true});
 await cp(resolve(root,'public'),output,{recursive:true});
-console.log(`Built ${ (await readdir(output)).length } entries into dist/. Vercel serves api/bookings.js separately.`);
+console.log(`Built ${ (await readdir(output)).length } entries into dist/. Vercel serves the room and vehicle API functions separately.`);

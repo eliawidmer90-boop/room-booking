@@ -1,5 +1,6 @@
-const $ = selector => document.querySelector(selector);
-const $$ = selector => [...document.querySelectorAll(selector)];
+const roomPanel = document.getElementById('room-panel');
+const $ = selector => roomPanel.querySelector(selector) || document.querySelector(selector);
+const $$ = selector => [...roomPanel.querySelectorAll(selector)];
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const zone = 'Africa/Windhoek';
@@ -251,6 +252,7 @@ async function handleCancelLink() {
 }
 
 document.addEventListener('click',async event=>{
+  if(!roomPanel.contains(event.target)&&!$('#detail-dialog').contains(event.target)) return;
   const close=event.target.closest('[data-close]');
   if(close) {document.getElementById(close.dataset.close).close();return;}
   const view=event.target.closest('[data-view]');
@@ -286,14 +288,15 @@ document.addEventListener('click',async event=>{
 $('#schedule-date').addEventListener('change',event=>{if(event.target.value){state.date=event.target.value;syncFormDate();loadSchedule();}});
 $('#my-bookings').addEventListener('change',event=>{state.mine=event.target.checked;loadSchedule();});
 // Native dialogs provide Escape, focus trapping and focus restoration.
-$$('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();}}));
+[$('#detail-dialog')].forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog){const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();}}));
 window.addEventListener('storage',event=>{if(event.key===storageKey){try{access=JSON.parse(event.newValue||'{}');render();}catch{}}});
 window.addEventListener('hashchange',handleCancelLink);
-window.addEventListener('online',()=>loadSchedule({quiet:true}));
+window.addEventListener('online',()=>{if(!roomPanel.hidden)loadSchedule({quiet:true});});
+document.addEventListener('booking-tab-change',event=>{if(event.detail==='rooms')loadSchedule({quiet:state.loaded});});
 let hiddenAt=0;
-document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Date.now();else if(Date.now()-hiddenAt>60000)loadSchedule({quiet:true});});
-setInterval(()=>{if(!document.hidden&&!$$('dialog').some(d=>d.open))loadSchedule({quiet:true});},60000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Date.now();else if(!roomPanel.hidden&&Date.now()-hiddenAt>60000)loadSchedule({quiet:true});});
+setInterval(()=>{if(!document.hidden&&!roomPanel.hidden&&!$('#detail-dialog').open)loadSchedule({quiet:true});},60000);
 prepareBooking();
 render();
-await loadSchedule();
+if(!roomPanel.hidden) await loadSchedule();
 await handleCancelLink();
