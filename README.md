@@ -1,50 +1,40 @@
-# Kavango East Education — conference room bookings
+# Kavango East Education — room and vehicle booking
 
-A complete, portable website for the Directorate of Education, Kavango East, Rundu. It has two rooms, **Big** and **Small**, a public schedule, and a simple booking form. Visitors do not need accounts.
+A plain booking board for the Directorate of Education, Kavango East, Rundu. Two tabs show the booking form and shared schedule immediately. There are no accounts or approval steps.
 
-The booking form is visible immediately alongside the schedule. There is one booking button, no sidebar or landing screen, and optional meeting details stay collapsed until needed.
+**Updating the existing GitHub → Vercel site? Start with [UPDATE-GITHUB.md](UPDATE-GITHUB.md).** Keep the same repository, Vercel project and Neon database.
 
-For an alternative using existing work Outlook accounts, see [M365-OPTION.md](M365-OPTION.md).
+## What is included
 
-## Deploy the downloaded folder on Vercel
+- **Room Booking:** Big and Small conference rooms, with the existing booking and cancellation behavior.
+- **Vehicle Booking:** Single Cab 1, Single Cab 2, Double Cab 1, Double Cab 2 and Bus (13-seater).
+- Vehicle reservations have departure and return dates/times and can cover several days. Driver, destination and purpose are optional.
+- Public schedules show who booked each resource and when. Click a reservation to see the details.
+- Day and week views, a vehicle filter, and **My bookings** for upcoming reservations remembered in this browser.
+- All times use Rundu time: **Africa/Windhoek, CAT (UTC+2)**, including on devices in other time zones.
+- Room durations use 15-minute steps, up to 24 hours. Vehicle departure/return times use 15-minute steps; a trip can span up to 366 days. Departures and room bookings can start up to one year ahead.
+- Separate resources can be used at the same time. PostgreSQL exclusion constraints prevent overlapping reservations for the same room or vehicle, including simultaneous requests. A booking can begin exactly when the earlier booking ends.
+- Visible schedules refresh every minute. A manual Refresh button is also available. Other visitors see changes on their next refresh.
 
-You need a Vercel account and a Neon database. There is no separate server to manage.
+## Existing database and bookings
 
-1. Extract the ZIP and open a terminal in the `kavango-room-booking` folder — the one containing `package.json` and `vercel.json`.
-2. Install [Node.js 24 LTS](https://nodejs.org/) if it is not installed. Run:
+The update uses the existing server-side `DATABASE_URL` setting. It adds a `vehicle_bookings` table in the same Neon database. The first vehicle API request creates that table and its constraints automatically. No manual SQL, database reset or additional Neon database is required.
 
-   ```sh
-   npx vercel
-   ```
+The original `room_bookings` table, IDs and cancellation hashes are retained. Original room cancellation links and browser ownership storage remain compatible. Vehicle bookings use separate cancellation storage and links.
 
-   Sign into Vercel, create a project and accept the settings from `vercel.json`. If asked, choose **Other** as the framework. The build command is `npm run build`; the output directory is `dist`. Deploy the whole project folder, including `api` and `lib`, rather than uploading only `dist`.
+Only a browser holding the reservation's private cancellation key, or someone using its private cancellation link, can cancel it. No account is required. Keep that link if you need access from another device. Clearing browser data and losing the link removes your cancellation access. The public API never returns cancellation keys or their hashes.
 
-3. In that project's Vercel dashboard, open **Storage → Create Database / Marketplace → Neon**. Choose the **Free** plan and connect it to the project. If Vercel offers a choice, use a region close to your Vercel function region. The integration should add `DATABASE_URL` to the project's environment variables. Check that it is enabled for **Production**. Enable it for **Preview** too if you want preview deployments to use a database; a separate preview database is preferable when testing changes against an established production site.
-4. Deploy again from the same folder:
+## Local preview
 
-   ```sh
-   npx vercel --prod
-   ```
-
-   The first schedule request creates the booking table and overlap constraints automatically. No manual SQL is required. Open the production URL, make a test booking, check it from another device, then cancel it using the saved private link.
-
-You can alternatively import the folder through a Git repository in Vercel and follow steps 3–4 by redeploying in the dashboard. Keep the root directory set to this project folder.
-
-**Making it visible to everyone:** If Vercel shows a sign-in page before your site, review the project's Deployment Protection setting for the URL you are sharing. Use the production URL and configure access to match your intended public booking board. The application itself has no sign-in screen.
-
-**Cost:** Neon advertised a $0 Free plan, no time limit and no credit card requirement when checked on 2 November 2026. It included 1 GB of database storage and 100 CU-hours per month per project. Usage depends on how often the page is used and how long the database remains active. Monthly compute or transfer limits suspend the free database rather than automatically moving it to a paid plan. Check the current plan shown during setup. Vercel hosting has its own plans and eligibility requirements; Neon's Free plan does not determine your Vercel hosting cost.
-
-## Try it locally
-
-The local preview can run with Node.js alone, without installing dependencies or setting up a database:
+Install Node.js 24. From this folder run:
 
 ```sh
 node scripts/dev.mjs
 ```
 
-Open `http://localhost:3000`. A clearly labelled local preview stores its bookings in `.local-data/bookings.json`. It starts empty, supports multiple tabs on this computer and uses the same API validation and cancellation flow. These local bookings are not uploaded or copied into the production database.
+Open `http://localhost:3000`. Without `DATABASE_URL`, the preview stores room and vehicle reservations separately under `.local-data/`. It starts empty. These files are excluded from Git and from the supplied ZIPs; they do not populate the deployed database.
 
-For the full development commands and verification:
+For normal development and checks:
 
 ```sh
 npm install
@@ -53,59 +43,52 @@ npm test
 npm run build
 ```
 
-To use your real shared database locally, copy `.env.example` to `.env.local`, enter your Neon `DATABASE_URL`, install dependencies, and run `npm run dev`. Treat the connection string as a password. It stays on the server and is never included in the browser files. With a real connection configured, local actions affect that database, so use a separate development database if production already contains bookings.
+The supplied `pnpm-lock.yaml` is retained from the original repository. The update adds no dependencies. You can use `pnpm install --frozen-lockfile`, `pnpm test` and `pnpm build` instead.
 
-`npm run db:setup` can also initialize a database explicitly. It is optional because production initializes itself.
+To use a shared database locally, copy `.env.example` to `.env.local`, enter its Neon connection string, and run `npm run dev` after installing dependencies. Actions affect the database in that setting. Use a separate Neon branch/database for isolated testing. Never upload `.env.local` or a connection string to GitHub.
 
-## How booking works
+`npm run db:setup` initializes both tables explicitly if wanted. It is optional because each deployed API initializes its own table automatically.
 
-- The schedule shows the organiser, meeting title, department, room and reserved time. Meeting title and department are optional; the name, room, date, start and duration are required.
-- Day and week views share the same data. The **My bookings** checkbox shows upcoming reservations made or saved in the current browser. All scheduling uses **Africa/Windhoek (CAT / UTC+2)**, regardless of the visitor's device time zone.
-- Choose a free time in the schedule to fill in the visible booking form, or enter the room, date and time directly. Changing the booking date also updates the schedule.
-- The normal day view shows 07:00–18:00 and expands when a reservation falls outside those hours. **Show full day** displays 00:00–24:00. Reservations can start at other times, include weekends, and last up to 24 hours across midnight. Durations use 15-minute steps. Bookings can be made up to a year ahead.
-- A PostgreSQL exclusion constraint blocks overlapping times **inside the database**, including simultaneous requests. A meeting may start exactly when the previous meeting ends. The rooms can be used at the same time.
-- The page checks for updates every minute while visible and provides a manual **Refresh** button. New bookings and cancellations update immediately for the person performing them. Other open pages see them at their next refresh. This is polling, not an instant push service.
-- **My bookings** remembers cancellation access in the browser. There are no passwords, emails or user accounts. The confirmation also provides a private cancellation link that works on another device. The link does not cancel anything until the visitor confirms cancellation.
-- Public API responses never include cancellation tokens or their hashes. Only the browser that made the booking, or someone given that booking's private link, can cancel it. Without an account, a lost link plus cleared browser data cannot be automatically recovered by proving identity.
-- **Add to calendar** downloads an `.ics` file for common calendar apps. That copy is separate from the shared room schedule; cancelling here does not remove a previously imported calendar event.
+## Vercel
 
-## Why this setup
+Keep the project rooted in the folder containing `package.json` and `vercel.json`. The framework preset is **Other**, build command `npm run build`, output directory `dist`, and Node version 24.x. Vercel hosts the browser files and two API functions. Upload the source folders, including `api` and `lib`; uploading only `dist` cannot provide shared bookings.
 
-The frontend is plain HTML, CSS and JavaScript, so it has no framework build or runtime to maintain. Vercel serves those files and runs a single small booking function. Neon stores the shared records permanently. A file saved inside a Vercel function or a browser's local storage would not provide a dependable shared schedule. A single shared JSON file also needs careful coordination to avoid lost updates; the database directly enforces the room overlap rule.
+Production needs `DATABASE_URL` connected to the existing Neon database. Preview deployments also need a Preview environment variable if you want shared booking tests there. A preview pointing to the production connection acts on real bookings; a separate Neon branch provides isolation.
 
-The deployed application deliberately returns an unavailable state if the database is missing or unreachable. It never silently switches visitors to independent local schedules.
+The deployed APIs return an unavailable message when the database is missing or unreachable. They never silently switch to local data.
 
-## Branding and local assets
-
-The website identifies the Directorate of Education, Kavango East, Rundu. It includes a locally stored Namibian national coat of arms and a simple green and neutral layout. No external fonts, tracking scripts or room photos are loaded.
-
-The official Directorate page confirmed the institutional identity. The government site's human-verification screen prevented a complete visual inspection, so the regional website's exact fonts, colour specifications and Kavango East crest could not be verified. This project does **not** claim to reproduce an approved Directorate brand manual. The national coat of arms is an existing symbol, not an invented regional logo. Replace or supplement `public/assets/namibia-coat-of-arms.svg` with the Directorate's supplied official artwork if needed; theme colours are at the top of `public/styles.css`.
+The existing Vercel Analytics script and its response-header permissions are preserved from the supplied GitHub archive. No Analytics package changes are needed.
 
 ## Files
 
-| Path | Purpose |
+| File/folder | Purpose |
 | --- | --- |
-| `public/` | All browser files and the local coat of arms |
-| `api/bookings.js` | Vercel's shared booking endpoint |
-| `lib/` | Validation, database constraints, storage and request handling |
-| `scripts/` | Local preview, static build and optional database initialization |
-| `tests/` | API checks and real PostgreSQL constraint checks using PGlite |
-| `vercel.json` | Vercel configuration and browser response headers |
-| `.env.example` | Example server-side database setting |
+| `public/index.html`, `public/styles.css`, `public/tabs.js` | Page, styling and the two tabs |
+| `public/app.js` | Existing room interface, now scoped to its tab |
+| `public/vehicles.js` | Vehicle form, schedule and cancellation interface |
+| `public/vehicle-catalog.js` | The five vehicle names and permanent IDs |
+| `api/bookings.js`, `api/vehicle-bookings.js` | Room and vehicle Vercel endpoints |
+| `lib/` | Validation, storage, request handling and database constraints |
+| `scripts/` | Local preview, build and optional database setup |
+| `tests/` | Room/vehicle API and actual PostgreSQL constraint tests using PGlite |
+| `UPDATE-GITHUB.md` | Upload instructions and exact changed/new file list |
 
-## Verification
+Vehicle IDs identify stored bookings. Renaming a display label is safe; adding/removing IDs requires a corresponding database migration for the fixed constraints. Do not change IDs to rename a vehicle.
 
-Automated checks cover invalid dates, past dates, duration limits, explicit Namibia time, overnight bookings, simultaneous overlap rejection, adjacent bookings, both rooms, idempotent retries, cancellation ownership and production behavior without a database. PostgreSQL constraints are exercised against PGlite, an embedded PostgreSQL engine. Desktop and phone layouts and the create/conflict/cancel flows were also checked in a browser.
+## Verification and deployment check
 
-A real Neon connection and a production Vercel deployment still require your account setup; they are not included or pre-provisioned in this folder. The database initialization and serverless integration should be confirmed with the deployment smoke test in step 4.
+Eight automated checks cover room and vehicle validation, simultaneous conflicts for every vehicle, adjacent reservations, multi-day listing, Namibia time, cancellation ownership, safe retries, missing database configuration and preservation of existing room bookings. Desktop and phone layouts, public details, conflicts, saved cancellation links and the original room flow were checked in a local browser.
 
-## Sources
+These checks use local data and embedded PostgreSQL. A live Neon connection was not available during preparation. After deployment, create one short vehicle reservation, check it in another browser/device, cancel it, and confirm the existing room schedule still loads.
 
-- [Official Directorate of Education page](https://kavangoeastrc.gov.na/education)
-- [National coat of arms artwork and public-domain file information](https://commons.wikimedia.org/wiki/File:Coat_of_arms_of_Namibia.svg)
-- [Vercel: Postgres integrations](https://vercel.com/docs/postgres)
-- [Vercel: deploy a local project](https://vercel.com/docs/cli/deploy)
-- [Neon on Vercel Marketplace](https://vercel.com/marketplace/neon)
-- [Neon pricing](https://neon.com/pricing)
+## Identity and artwork
+
+The existing national coat of arms and green/neutral layout are retained. The project identifies the Directorate of Education, Kavango East, Rundu. Exact compliance with a Directorate brand manual has not been verified; replace artwork with approved material if supplied.
+
+- [Directorate of Education](https://kavangoeastrc.gov.na/education)
+- [National coat of arms artwork](https://commons.wikimedia.org/wiki/File:Coat_of_arms_of_Namibia.svg)
+- [Vercel domains](https://vercel.com/docs/domains/working-with-domains)
 - [Neon serverless driver](https://neon.com/docs/serverless/serverless-driver)
-- [PostgreSQL range exclusion constraints](https://www.postgresql.org/docs/current/rangetypes.html#RANGETYPES-CONSTRAINT)
+- [PostgreSQL exclusion constraints](https://www.postgresql.org/docs/current/rangetypes.html#RANGETYPES-CONSTRAINT)
+
+The earlier Microsoft 365 alternative remains in [M365-OPTION.md](M365-OPTION.md).
